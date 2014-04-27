@@ -46,7 +46,7 @@ float TargetLatLon[18][2] PROGMEM = {
   {33.77222, -84.37845}, // GC Krispy (Atl)
   {33.77545, -84.37518}, // GC Cruzin to a Cache
   {33.77243, -84.38477},  // GC Rock the Casbah    
-//// WINDSOR
+//// WINDSOR CACHES
   {42.32186, -82.90516}, // GC Just for Nicholas (Windsor)
 {47.660753, -122.373978},
 {42.308133, -82.987233},
@@ -123,7 +123,7 @@ int buttonPin = 10; // the number of the pushbutton pin
 int buttonState; // the current reading from the input pin
 int lastButtonState = HIGH; // the previous reading from the input pin
 long buttonHoldTime = 0; // the last time the output pin was toggled
-long buttonHoldDelay = 2500; // how long to hold the button down
+long buttonHoldDelay = 1500; // how long to hold the button down
 
 // the following variables are long's because the time, measured in miliseconds,
 // will quickly become a bigger number than can be stored in an int.
@@ -135,13 +135,16 @@ long menuTime;
 
 float fLat = 0.0;
 float fLon = 0.0;
+  
+
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void setup()
 {
   // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
   // also spit it out
   Serial.begin(115200);
-  Serial.println("Adafruit GPS library basic test!");
+//  Serial.println("Adafruit GPS library basic test!");
 
   // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
   GPS.begin(9600);
@@ -157,7 +160,7 @@ void setup()
   // print it out we don't suggest using anything higher than 1 Hz
 
   // Request updates on antenna status, comment out to keep quiet
-  // GPS.sendCommand(PGCMD_ANTENNA);
+  GPS.sendCommand(PGCMD_ANTENNA);
 
   compass.init();
   compass.enableDefault();
@@ -172,7 +175,7 @@ void setup()
 
   delay(1000);
   // Ask for firmware version
-  Serial1.println(PMTK_Q_RELEASE);
+//  Serial1.println(PMTK_Q_RELEASE);
 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
@@ -185,7 +188,7 @@ void setup()
 uint32_t gpsTimer = millis();
 uint32_t startupTimer = millis();
 uint32_t compassTimer = millis();
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void loop() // run over and over again
 {
   compassCheck();
@@ -200,79 +203,75 @@ void loop() // run over and over again
 
   //Serial.println(buttonState);
   // read data from the GPS in the 'main loop'
-  char c = GPS.read();
-
+   char c = GPS.read();
   // if you want to debug, this is a good time to do it!
   if (GPSECHO)
-    if (c) Serial.print(c);
+  if (c) Serial.print(c);
   // if a sentence is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
-    // a tricky thing here is if we print the NMEA sentence, or data
-    // we end up not listening and catching other sentences!
-    // so be very wary if using OUTPUT_ALLDATA and trytng to print out data
-    Serial.println(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
-    if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-      return; // we can fail to parse a sentence in which case we should just wait for another
+  // a tricky thing here is if we print the NMEA sentence, or data
+  // we end up not listening and catching other sentences!
+  // so be very wary if using OUTPUT_ALLDATA and trytng to print out data
+  Serial.println(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
+  if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+  return; // we can fail to parse a sentence in which case we should just wait for another
   }
 
-  // if millis() or timer wraps around, we'll just reset it
-  if (gpsTimer > millis()) gpsTimer = millis();
-
+    Serial.print("Fix: "); Serial.println((int)GPS.fix);
+    Serial.println("-- ");  
+//
+//  // if millis() or timer wraps around, we'll just reset it
+//  if (gpsTimer > millis()) gpsTimer = millis();
+//
   if (startGPS == 0) {
     if (GPS.fix) {
       // set the Time to the latest GPS reading
-      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
-      delay(50);
-      adjustTime(offset * SECS_PER_HOUR);
-      delay(500);
+//      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
+//      delay(50);
+//      adjustTime(offset * SECS_PER_HOUR);
+//      delay(500);
 
       // CALCULATE DISTACNE BETWEEN LOCATION AND TARGET LOCATION IN METERS - WHY ARE WE DOING THIS HERE?
       tripDistance = (double)calc_dist(fLat, fLon, targetLat, targetLon);
       startGPS = 1;
     }
   }
-  // approximately every 60 seconds or so, update time
-  if ((millis() - gpsTimer > 60000) && (startGPS == 1)) {
-    gpsTimer = millis(); // reset the timer
-    if (GPS.fix) {
-      // set the Time to the latest GPS reading
-      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
-      delay(50);
-      adjustTime(offset * SECS_PER_HOUR);
-      delay(500);
-    }
-  }
-  // WHAT DOES THIS DO? GETS LAT AND LONG OF CURRENT LOCATION IN DEGREES? 
+//  // approximately every 60 seconds or so, update time
+//  if ((millis() - gpsTimer > 60000) && (startGPS == 1)) {
+//    gpsTimer = millis(); // reset the timer
+//    if (GPS.fix) {
+//      // set the Time to the latest GPS reading
+//      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
+//      delay(50);
+//      adjustTime(offset * SECS_PER_HOUR);
+//      delay(500);
+//    }
+//  }
+//
+  // DOES THIS OBTAIN LAT AND LONG OF CURRENT LOCATION IN DEGREES? 
   if (GPS.fix) {
     fLat = decimalDegrees(GPS.latitude, GPS.lat);
     fLon = decimalDegrees(GPS.longitude, GPS.lon);
   }
 
-  //  if (mode == 2) {
-  //    clockMode();
-  //  }
   if (mode == 0) {
-        navMode();
-
-//    compassMode();
+//    navMode();
+    compassMode();
   }
   if (mode == 1) {
     navMode();
   }
-//  if (mode == 2) {
-//    rainbowCycle(2);
+}
+//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//// Turn all lights off
+//void turnoff(uint8_t wait){ 
+//  uint16_t i;  
+//  for(i=0; i<strip.numPixels(); i++) {    
+//    strip.setPixelColor(i, strip.Color(0, 0, 0));
 //  }  
-}
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Turn all lights off
-void turnoff(uint8_t wait){ 
-  uint16_t i;  
-  for(i=0; i<strip.numPixels(); i++) {    
-    strip.setPixelColor(i, strip.Color(0, 0, 0));
-  }  
-  strip.show();    
-  delay(wait);
-}
+//  strip.show();    
+//  delay(wait);
+//}
 // Fill pixels in one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
   for(uint16_t i=0; i<strip.numPixels(); i++) {  
@@ -281,33 +280,33 @@ void colorWipe(uint32_t c, uint8_t wait) {
     delay(wait);
   }
 }
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-    for(i=0; i< strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 205));
-    }
-    strip.show();
-    delay(wait);
-  }
-}
-uint32_t Wheel(byte WheelPos) {
-  if(WheelPos < 85) {
-    return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-  } 
-  else if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  } 
-  else {
-    WheelPos -= 170;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-}
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//// Slightly different, this makes the rainbow equally distributed throughout
+//void rainbowCycle(uint8_t wait) {
+//  uint16_t i, j;
+//
+//  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
+//    for(i=0; i< strip.numPixels(); i++) {
+//      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 205));
+//    }
+//    strip.show();
+//    delay(wait);
+//  }
+//}
+//uint32_t Wheel(byte WheelPos) {
+//  if(WheelPos < 85) {
+//    return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+//  } 
+//  else if(WheelPos < 170) {
+//    WheelPos -= 85;
+//    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+//  } 
+//  else {
+//    WheelPos -= 170;
+//    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+//  }
+//}
+//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void buttonCheck() {
   menuTime = millis(); // I THINK WE CAN REMOVE THIS LINE
   int buttonState = digitalRead(buttonPin);
@@ -331,11 +330,11 @@ void buttonCheck() {
     }
   }
 }
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// NAVIGATION MODE
+//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//// NAVIGATION MODE
 void navMode() {
-  Serial.println("Navigation Mode Activated");
+  Serial.println("Navigation Mode Activated. GPS Fix and startGPS:");
   Serial.println(GPS.fix);
   Serial.println(startGPS);
   
@@ -408,16 +407,15 @@ void navMode() {
         strip.setPixelColor(i, strip.Color(RedsArray[i],GrnsArray[i],BlusArray[i]));
       }
       strip.show();      // Show LED Settings
-      delay(1000);  Serial.println('asdfasdf11');
+      delay(1000); 
     }
     else if (TargetNearby == 0) { // display circles in yellow if all distances are far away
       strip.setPixelColor(startLEDlast, strip.Color(0, 0, 0));
-      strip.setPixelColor(startLED, strip.Color(64, 128, 0));
+      strip.setPixelColor(startLED, strip.Color(64, 96, 0));
       strip.show();
       startLEDlast = startLED;
       startLED++;
       startLED = startLED % (NLEDs);
-//      delay(500);
     }
 
     // Reset Colour Arrays 
@@ -426,7 +424,7 @@ void navMode() {
     }    
     TargetNearby = 0;
     delay(20);   
-  } 
+  }
   else {
     // if millis() or timer wraps around, we'll just reset it
     if (startupTimer > millis()) startupTimer = millis();
@@ -445,7 +443,7 @@ void navMode() {
       startLED++;
     }
   }
-  delay(1000);  Serial.println('zxcvzxcvzxcv22');
+  delay(50);  
 
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -544,7 +542,7 @@ void compassMode() {
   compassDirection(compassReading);
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// I THINK THIS IS WHERE THE FLIP NEEDS TO BE MADE
+ 
 void compassCheck() {
   // if millis() or timer wraps around, we'll just reset it
   if (compassTimer > millis()) compassTimer = millis();
@@ -555,14 +553,14 @@ void compassCheck() {
     compass.read();
     compassReading = compass.heading((LSM303::vector<int>){
       0,+1,0    }
-    ); // I THINK THIS IS WHERE THE FLIP NEEDS TO BE MADE WHY TEH -1 IN THE VECTOR?
+    ); // 
   }
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
 unsigned int compassDirection(int compassHeading)
 {
-  //Serial.print("Compass Direction: ");
-  //Serial.println(compassHeading);
+  Serial.print("Compass Direction: ");
+  Serial.println(compassHeading);
 
   unsigned int ledDir = 2;
   int tempDir = 0;
