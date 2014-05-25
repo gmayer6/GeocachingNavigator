@@ -27,40 +27,34 @@ LSM303 compass;
 // off by default!
 boolean usingInterrupt = false;
 
-//--------------------------------------------------|
-// WAYPOINT |
-//--------------------------------------------------|
-// Please enter the latitude and longitude of your desired destinations
-#define GEO_LAT 42.324521;   // THESE VARIABLES ONLY USED HERE AND A FEW LINES BELOW
-#define GEO_LON -73.993928;  // THESE VARIABLES ONLY USED HERE AND A FEW LINES BELOW
-
 // Number of targets
 int NTargets = 5;
 
 // Number of LEDs in Ring
 int NLEDs = 16;
 
-// The first number has to be the number of targets
+// The first number of this matrix has to be the number of targets, the second number is always 2
+// The matrix gives the decimal WGS gps coordinates of each destination
+// DON'T FORGET THE COMMA BETWEEN THE TWO COORDINATES
 float TargetLatLon[18][2] PROGMEM = {
-    {33.76907, -84.37565}, // GC Central Park
+  {33.76907, -84.37565}, // GC Central Park
   {33.77222, -84.37845}, // GC Krispy (Atl)
   {33.77545, -84.37518}, // GC Cruzin to a Cache
-  {33.77243, -84.38477},  // GC Rock the Casbah    
-//// WINDSOR CACHES
+  {33.77243, -84.38477}, // GC Rock the Casbah    
+  {30.75465 -81.65}, // On My Mind (Southern Georgia)
+  //// WINDSOR CACHES
   {42.32186, -82.90516}, // GC Just for Nicholas (Windsor)
-{47.660753, -122.373978},
-{42.308133, -82.987233},
-{42.313400, -82.9863},
-{42.312066, -82.9931},
-{42.320867, -82.92505},
-{42.324033, -82.921667},
-{42.323533, -82.92445},
-{42.324533, -82.926083},
-{42.319017, -82.92375},
-{42.321983, -82.930217},
-{42.323533, -82.92445},
-{42.309533, -82.983833},
-{47.645083, -122.371533}
+  {42.308133, -82.987233},
+  {42.313400, -82.9863},
+  {42.312066, -82.9931},
+  {42.320867, -82.92505},
+  {42.324033, -82.921667},
+  {42.323533, -82.92445},
+  {42.324533, -82.926083},
+  {42.319017, -82.92375},
+  {42.321983, -82.930217},
+  {42.323533, -82.92445},
+  {42.309533, -82.983833},
 };  
 
 // Threshold distance for stuff *****
@@ -85,10 +79,6 @@ int BlusArray[16];
 //--------------------------------------------------|
 // Flag that indicates if there is a destination in range
 int TargetNearby = 0;
-
-// Navigation location
-float targetLat = GEO_LAT;
-float targetLon = GEO_LON;
 
 // Trip distance
 float tripDistance;
@@ -132,11 +122,8 @@ long debounceDelay = 50; // the debounce time; increase if the output flickers
 long menuDelay = 2500;
 long menuTime;
 
-
 float fLat = 0.0;
 float fLon = 0.0;
-  
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void setup()
@@ -144,14 +131,15 @@ void setup()
   // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
   // also spit it out
   Serial.begin(115200);
-//  Serial.println("Adafruit GPS library basic test!");
 
   // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
   GPS.begin(9600);
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  
   // uncomment this line to turn on only the "minimum recommended" data
   //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
+  
   // For parsing data, we don't suggest using anything but either RMC only or RMC+GGA since
   // the parser doesn't care about other sentences at this time
   // Set the update rate
@@ -209,12 +197,12 @@ void loop() // run over and over again
   if (c) Serial.print(c);
   // if a sentence is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
-  // a tricky thing here is if we print the NMEA sentence, or data
-  // we end up not listening and catching other sentences!
-  // so be very wary if using OUTPUT_ALLDATA and trytng to print out data
-  Serial.println(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
-  if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-  return; // we can fail to parse a sentence in which case we should just wait for another
+    // a tricky thing here is if we print the NMEA sentence, or data
+    // we end up not listening and catching other sentences!
+    // so be very wary if using OUTPUT_ALLDATA and trytng to print out data
+    Serial.println(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
+    if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+    return; // we can fail to parse a sentence in which case we should just wait for another
   }
 
     Serial.print("Fix: "); Serial.println((int)GPS.fix);
@@ -231,8 +219,6 @@ void loop() // run over and over again
 //      adjustTime(offset * SECS_PER_HOUR);
 //      delay(500);
 
-      // CALCULATE DISTACNE BETWEEN LOCATION AND TARGET LOCATION IN METERS - WHY ARE WE DOING THIS HERE?
-      tripDistance = (double)calc_dist(fLat, fLon, targetLat, targetLon);
       startGPS = 1;
     }
   }
@@ -248,7 +234,8 @@ void loop() // run over and over again
 //    }
 //  }
 //
-  // DOES THIS OBTAIN LAT AND LONG OF CURRENT LOCATION IN DEGREES? 
+  // OBTAIN LAT AND LONG OF CURRENT LOCATION IN DEGREES
+  // fLat and fLon are global variables
   if (GPS.fix) {
     fLat = decimalDegrees(GPS.latitude, GPS.lat);
     fLon = decimalDegrees(GPS.longitude, GPS.lon);
@@ -263,15 +250,7 @@ void loop() // run over and over again
   }
 }
 //// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//// Turn all lights off
-//void turnoff(uint8_t wait){ 
-//  uint16_t i;  
-//  for(i=0; i<strip.numPixels(); i++) {    
-//    strip.setPixelColor(i, strip.Color(0, 0, 0));
-//  }  
-//  strip.show();    
-//  delay(wait);
-//}
+//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Fill pixels in one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
   for(uint16_t i=0; i<strip.numPixels(); i++) {  
@@ -280,32 +259,6 @@ void colorWipe(uint32_t c, uint8_t wait) {
     delay(wait);
   }
 }
-//// Slightly different, this makes the rainbow equally distributed throughout
-//void rainbowCycle(uint8_t wait) {
-//  uint16_t i, j;
-//
-//  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-//    for(i=0; i< strip.numPixels(); i++) {
-//      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 205));
-//    }
-//    strip.show();
-//    delay(wait);
-//  }
-//}
-//uint32_t Wheel(byte WheelPos) {
-//  if(WheelPos < 85) {
-//    return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-//  } 
-//  else if(WheelPos < 170) {
-//    WheelPos -= 85;
-//    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-//  } 
-//  else {
-//    WheelPos -= 170;
-//    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-//  }
-//}
-//// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void buttonCheck() {
   menuTime = millis(); // I THINK WE CAN REMOVE THIS LINE
@@ -443,8 +396,7 @@ void navMode() {
       startLED++;
     }
   }
-  delay(50);  
-
+//  delay(1000);  // Adding a delay here created a lot of problems. Leave this commented out. 
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
