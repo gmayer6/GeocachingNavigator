@@ -41,7 +41,7 @@ float TargetLatLon[18][2] PROGMEM = {
   {33.77222, -84.37845}, // GC Krispy (Atl)
   {33.77545, -84.37518}, // GC Cruzin to a Cache
   {33.77243, -84.38477}, // GC Rock the Casbah    
-  {30.75465 -81.65}, // On My Mind (Southern Georgia)
+  {30.75465, -81.65}, // On My Mind (Southern Georgia)
   //// WINDSOR CACHES
   {42.32186, -82.90516}, // GC Just for Nicholas (Windsor)
   {42.308133, -82.987233},
@@ -339,13 +339,15 @@ void navMode() {
         
         // At each given pixel, we want to only show the closest target
         // Display a Target at a pixel if it is closer than other targets at that pixel
+        // Don't forget: the closer the target, the more "red" it is
+        // Don't forget: the closer the target, the more "green" it is
         if ((TempDist < tripSegment/2) && (RedsArray[DN] < dirLED_r)) {
           RedsArray[DN] = dirLED_r;
           GrnsArray[DN] = dirLED_g;
           BlusArray[DN] = dirLED_b;    
 
         }
-        if ((TempDist < tripSegment) && (TempDist >= tripSegment/2) && (dirLED_g > GrnsArray[DN])) {
+        if ((TempDist < tripSegment) && (TempDist >= tripSegment/2) && (dirLED_g < GrnsArray[DN])) {
           RedsArray[DN] = dirLED_r;
           GrnsArray[DN] = dirLED_g;
           BlusArray[DN] = dirLED_b;     
