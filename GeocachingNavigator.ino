@@ -36,25 +36,74 @@ int NLEDs = 16;
 // The first number of this matrix has to be the number of targets, the second number is always 2
 // The matrix gives the decimal WGS gps coordinates of each destination
 // DON'T FORGET THE COMMA BETWEEN THE TWO COORDINATES
-float TargetLatLon[18][2] PROGMEM = {
-  {33.76907, -84.37565}, // GC Central Park
-  {33.77222, -84.37845}, // GC Krispy (Atl)
-  {33.77545, -84.37518}, // GC Cruzin to a Cache
-  {33.77243, -84.38477}, // GC Rock the Casbah    
-  {30.75465, -81.65}, // On My Mind (Southern Georgia)
+float TargetLatLon[23][2] PROGMEM = {
+  {
+    33.76907, -84.37565          }
+  , // GC Central Park
+  {
+    33.77222, -84.37845          }
+  , // GC Krispy (Atl)
+  {    
+    33.77545, -84.37518          }
+  , // GC Cruzin to a Cache
+  {    
+    33.77243, -84.38477          }
+  , // GC Rock the Casbah    
+  {
+    30.75465, -81.65          }
+  , // On My Mind (Southern Georgia)
+  {
+    32.116, -81.23533          }
+  , // Burt is Evil (Pooler GA)
+  {
+    32.00015, -80.84407          }
+  , // Travel bug hotel (Tybee island, GA)
+  {
+    31.14078, -81.58685          }
+  , // home of the big one, gc28ftt
+  {
+    31.13967, -81.57863          }
+  , // fuel and food, gc28ftm
+  {
+    31.10558, -81.49233          }
+  , // geo jewel, gc4g2eq
   //// WINDSOR CACHES
-  {42.32186, -82.90516}, // GC Just for Nicholas (Windsor)
-  {42.308133, -82.987233},
-  {42.313400, -82.9863},
-  {42.312066, -82.9931},
-  {42.320867, -82.92505},
-  {42.324033, -82.921667},
-  {42.323533, -82.92445},
-  {42.324533, -82.926083},
-  {42.319017, -82.92375},
-  {42.321983, -82.930217},
-  {42.323533, -82.92445},
-  {42.309533, -82.983833},
+  {
+    42.32186, -82.90516          }
+  , // GC Just for Nicholas (Windsor)
+  {
+    42.308133, -82.987233          }
+  ,
+  {
+    42.313400, -82.9863          }
+  ,
+  {
+    42.312066, -82.9931          }
+  ,
+  {
+    42.320867, -82.92505          }
+  ,
+  {
+    42.324033, -82.921667          }
+  ,
+  {
+    42.323533, -82.92445          }
+  ,
+  {
+    42.324533, -82.926083          }
+  ,
+  {
+    42.319017, -82.92375          }
+  ,
+  {
+    42.321983, -82.930217          }
+  ,
+  {
+    42.323533, -82.92445          }
+  ,
+  {
+    42.309533, -82.983833          }
+  ,
 };  
 
 // Threshold distance for stuff *****
@@ -136,10 +185,10 @@ void setup()
   GPS.begin(9600);
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  
+
   // uncomment this line to turn on only the "minimum recommended" data
   //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
-  
+
   // For parsing data, we don't suggest using anything but either RMC only or RMC+GGA since
   // the parser doesn't care about other sentences at this time
   // Set the update rate
@@ -163,7 +212,7 @@ void setup()
 
   delay(1000);
   // Ask for firmware version
-//  Serial1.println(PMTK_Q_RELEASE);
+  //  Serial1.println(PMTK_Q_RELEASE);
 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
@@ -191,10 +240,10 @@ void loop() // run over and over again
 
   //Serial.println(buttonState);
   // read data from the GPS in the 'main loop'
-   char c = GPS.read();
+  char c = GPS.read();
   // if you want to debug, this is a good time to do it!
   if (GPSECHO)
-  if (c) Serial.print(c);
+    if (c) Serial.print(c);
   // if a sentence is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
     // a tricky thing here is if we print the NMEA sentence, or data
@@ -202,38 +251,39 @@ void loop() // run over and over again
     // so be very wary if using OUTPUT_ALLDATA and trytng to print out data
     Serial.println(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
     if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-    return; // we can fail to parse a sentence in which case we should just wait for another
+      return; // we can fail to parse a sentence in which case we should just wait for another
   }
 
-    Serial.print("Fix: "); Serial.println((int)GPS.fix);
-    Serial.println("-- ");  
-//
-//  // if millis() or timer wraps around, we'll just reset it
-//  if (gpsTimer > millis()) gpsTimer = millis();
-//
+  Serial.print("Fix: "); 
+  Serial.println((int)GPS.fix);
+  Serial.println("-- ");  
+  //
+  //  // if millis() or timer wraps around, we'll just reset it
+  //  if (gpsTimer > millis()) gpsTimer = millis();
+  //
   if (startGPS == 0) {
     if (GPS.fix) {
       // set the Time to the latest GPS reading
-//      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
-//      delay(50);
-//      adjustTime(offset * SECS_PER_HOUR);
-//      delay(500);
+      //      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
+      //      delay(50);
+      //      adjustTime(offset * SECS_PER_HOUR);
+      //      delay(500);
 
       startGPS = 1;
     }
   }
-//  // approximately every 60 seconds or so, update time
-//  if ((millis() - gpsTimer > 60000) && (startGPS == 1)) {
-//    gpsTimer = millis(); // reset the timer
-//    if (GPS.fix) {
-//      // set the Time to the latest GPS reading
-//      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
-//      delay(50);
-//      adjustTime(offset * SECS_PER_HOUR);
-//      delay(500);
-//    }
-//  }
-//
+  //  // approximately every 60 seconds or so, update time
+  //  if ((millis() - gpsTimer > 60000) && (startGPS == 1)) {
+  //    gpsTimer = millis(); // reset the timer
+  //    if (GPS.fix) {
+  //      // set the Time to the latest GPS reading
+  //      setTime(GPS.hour, GPS.minute, GPS.seconds, GPS.day, GPS.month, GPS.year);
+  //      delay(50);
+  //      adjustTime(offset * SECS_PER_HOUR);
+  //      delay(500);
+  //    }
+  //  }
+  //
   // OBTAIN LAT AND LONG OF CURRENT LOCATION IN DEGREES
   // fLat and fLon are global variables
   if (GPS.fix) {
@@ -242,7 +292,7 @@ void loop() // run over and over again
   }
 
   if (mode == 0) {
-//    navMode();
+    //    navMode();
     compassMode();
   }
   if (mode == 1) {
@@ -290,12 +340,12 @@ void navMode() {
   Serial.println("Navigation Mode Activated. GPS Fix and startGPS:");
   Serial.println(GPS.fix);
   Serial.println(startGPS);
-  
+
   if ((startGPS == 1) && (GPS.fix)) {
 
     //    Serial.println("Signal Found");
-//    strip.setPixelColor(0, strip.Color(255, 0, 0));
-//    strip.show();
+    //    strip.setPixelColor(0, strip.Color(255, 0, 0));
+    //    strip.show();
 
     float TargetLat;
     float TargetLon;
@@ -317,9 +367,9 @@ void navMode() {
 
       // if distance is less or equal to threshold, then compute colors, store in color vectors
       if (TempDist <= tripSegment) {
-        
+
         TargetNearby = 1;            
-        
+
         // Compute RBG colors
         headingDistanceLinear(TempDist);
 
@@ -330,13 +380,13 @@ void navMode() {
         else {
           DN = (int)compassDirection(calc_bearing(fLat, fLon, TargetLat, TargetLon)-compassReading+360);
         }   
-        
-//        Serial.println("----- ");        
-//        Serial.println("Red, DN, TempDist, i: ");
-//        Serial.print(dirLED_r);Serial.println(" ");Serial.print(DN);Serial.println(" ");
-//        Serial.print(TempDist);Serial.println(" ");Serial.print(i);
-//        Serial.println("~ ~ ~ ~ ~ ~ ~");                
-        
+
+        //        Serial.println("----- ");        
+        //        Serial.println("Red, DN, TempDist, i: ");
+        //        Serial.print(dirLED_r);Serial.println(" ");Serial.print(DN);Serial.println(" ");
+        //        Serial.print(TempDist);Serial.println(" ");Serial.print(i);
+        //        Serial.println("~ ~ ~ ~ ~ ~ ~");                
+
         // At each given pixel, we want to only show the closest target
         // Display a Target at a pixel if it is closer than other targets at that pixel
         // Don't forget: the closer the target, the more "red" it is
@@ -375,7 +425,9 @@ void navMode() {
 
     // Reset Colour Arrays 
     for (int N=0; N < NLEDs; N++) {
-      RedsArray[N]=0;GrnsArray[N]=0;BlusArray[N]=0;
+      RedsArray[N]=0;
+      GrnsArray[N]=0;
+      BlusArray[N]=0;
     }    
     TargetNearby = 0;
     delay(20);   
@@ -398,7 +450,7 @@ void navMode() {
       startLED++;
     }
   }
-//  delay(1000);  // Adding a delay here created a lot of problems. Leave this commented out. 
+  //  delay(1000);  // Adding a delay here created a lot of problems. Leave this commented out. 
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -496,7 +548,7 @@ void compassMode() {
   compassDirection(compassReading);
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- 
+
 void compassCheck() {
   // if millis() or timer wraps around, we'll just reset it
   if (compassTimer > millis()) compassTimer = millis();
@@ -506,7 +558,7 @@ void compassCheck() {
     compassTimer = millis(); // reset the timer
     compass.read();
     compassReading = compass.heading((LSM303::vector<int>){
-      0,+1,0    }
+      0,+1,0                        }
     ); // 
   }
 }
@@ -732,5 +784,74 @@ unsigned int compassDirection(int compassHeading)
   }
   return ledDir;
 }
+
+
+void DayOfTheWeek(int YY,int MM,int DD) {
+  // 0 = Sat
+  // 1 = Sun
+  // 2 = Mon
+  // 3 = Tue
+  // 4 = Wed
+  // 5 = Thu
+  // 6 = Fri
+  int MonthCode; // each month will be assigned a positive integer
+  int YearCode;  // each year will be assigned a postive integer
+  int CenturyCode = -1; // for 21st century, this will always be -1
+  int LY; // this variable accounts for leap years (is a binary variable)
+  
+  // CHECK IF CURRENT YEAR IS A LEAP YEAR
+  if (YY % 4 == 0) {
+    LY = 1;  // the year is a leap year
+  }
+  else {
+    LY = 0;  // the year is not a leap year
+  }
+  // SET MONTH CODE
+  if (MM == 1){ // Jan
+    MonthCode = 1 - LY;
+  }
+  else if (MM == 2){ // Feb
+    MonthCode = 4 - LY;
+  }
+  else if (MM == 3){ // Mar
+    MonthCode = 4;
+  }
+  else if (MM == 4){ // Apr
+    MonthCode = 0;
+  }
+  else if (MM == 5){ // May
+    MonthCode = 2;
+  }
+  else if (MM == 6){ // June
+    MonthCode = 5;
+  }
+  else if (MM == 7){ // Jul
+    MonthCode = 0;
+  }
+  else if (MM == 8){
+    MonthCode = 3;
+  }
+  else if (MM == 9){
+    MonthCode = 6;
+  }
+  else if (MM == 10){
+    MonthCode = 1;
+  }
+  else if (MM == 11){
+    MonthCode = 4;
+  }
+  else if (MM == 12){
+    MonthCode = 6;
+  }
+
+  YearCode = YY + floor(YY/4);
+  
+  DOTW = (DD + MonthCode + YearCode + CenturyCode) % 7;
+
+}
+
+
+
+
 
 
